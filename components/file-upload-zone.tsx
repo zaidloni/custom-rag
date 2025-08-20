@@ -7,6 +7,7 @@ import { Upload, AlertCircle, CheckCircle } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { SUPPORTED_FILE_TYPES, MAX_FILE_SIZE } from "@/lib/config"
+import { toast } from "sonner"
 
 interface FileUploadZoneProps {
   onFileSelect: (file: File) => Promise<void>
@@ -94,6 +95,10 @@ export function FileUploadZone({ onFileSelect, isProcessing }: FileUploadZonePro
 
   const handleFileInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
+    if (file && !file.type.startsWith('application/pdf')) {
+      toast.error('Only PDF files are supported')
+      return
+    }
     if (file) {
       await handleFile(file)
       e.target.value = "" // Reset input
@@ -129,13 +134,13 @@ export function FileUploadZone({ onFileSelect, isProcessing }: FileUploadZonePro
               {isDragOver ? "Drop your file here" : "Drag and drop files here, or click to browse"}
             </p>
             <p className="text-xs text-muted-foreground">
-              Supports: PDF, TXT, DOCX, MD (max {MAX_FILE_SIZE / 1024 / 1024}MB)
+              Supports: PDF (max {MAX_FILE_SIZE / 1024 / 1024}MB)
             </p>
           </div>
 
           <Input
             type="file"
-            accept=".pdf,.txt,.docx,.md"
+            accept=".pdf"
             onChange={handleFileInput}
             disabled={isProcessing}
             className="max-w-xs"

@@ -1,20 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import {
-  Brain,
-  Sparkles,
-  FileText,
-  MessageSquare,
-  Zap,
-  TrendingUp,
-} from 'lucide-react'
+import { Brain, Sparkles } from 'lucide-react'
 import { DocumentIngestionPanel } from '@/components/document-ingestion-panel'
 import { ChatInterface } from '@/components/chat-interface'
 import { FullScreenChatModal } from '@/components/full-screen-chat-modal'
 import { ThemeToggle } from '@/components/theme-toggle'
 import type { Document, ChatMessage } from '@/lib/types'
-import { dummyDocuments, mockApiService } from '@/lib/dummy-data'
+import { toast } from 'sonner'
 
 export default function RAGApp() {
   const [documents, setDocuments] = useState<Document[]>([
@@ -70,26 +63,31 @@ export default function RAGApp() {
 
   const handleAddFile = async (file: File) => {
     setIsProcessing(true)
-    console.log(file);
-    const filetype = file.type;
-    console.log(filetype);
-      const formData = new FormData();
-      formData.append('file', file);
+    const filetype = file.type
+    const formData = new FormData()
+    formData.append('file', file)
+
+    if (!filetype.startsWith('application/pdf')) {
+      toast.error('Only PDF files are supported')
+      setIsProcessing(false)
+      return
+    }
 
     try {
-      const response = await fetch(`/api/documents/ingest-file?userId=${localStorage.getItem('rag-app-uuid')}`, {
-        method: 'POST',
-        body: formData,
-      })
+      const response = await fetch(
+        `/api/documents/ingest-file?userId=${localStorage.getItem(
+          'rag-app-uuid'
+        )}`,
+        {
+          method: 'POST',
+          body: formData,
+        }
+      )
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
-
       const data = await response.json()
-      console.log(data);
-      // const document = await mockApiService.ingestFile(file)
-      // setDocuments((prev) => [...prev, document])
     } catch (error) {
       console.error('Error adding file:', error)
     } finally {
@@ -105,7 +103,10 @@ export default function RAGApp() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ url, userId: localStorage.getItem('rag-app-uuid') }),
+        body: JSON.stringify({
+          url,
+          userId: localStorage.getItem('rag-app-uuid'),
+        }),
       })
       const data = await document.json()
       console.log(data)
@@ -117,79 +118,7 @@ export default function RAGApp() {
     }
   }
 
-  const handleRemoveDocument = async (id: string) => {
-    try {
-      await mockApiService.deleteDocument(id)
-      setDocuments((prev) => prev.filter((doc) => doc.id !== id))
-    } catch (error) {
-      console.error('Error deleting document:', error)
-    }
-  }
-
-  // const handleSendMessage = async (content: string) => {
-  //   console.log({ content, messages })
-  //   // return;
-  //   if (content.trim().length === 0) return
-
-  //   // const userMessage: ChatMessage = {
-  //   //   id: Date.now().toString(),
-  //   //   role: 'user',
-  //   //   content,
-  //   //   timestamp: new Date(),
-  //   // }
-
-  //   // setMessages((prev) => [...prev, userMessage])
-
-  //   try {
-  //     setIsChatting(true)
-  //     const response = await fetch('api/chat', {
-  //       method: 'POST',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify({
-  //         userQuery: content,
-  //         userId: localStorage.getItem('rag-app-uuid'),
-  //         conversationHistory: messages || [],
-  //       }),
-  //     })
-  //     const data = await response.json()
-  //     console.log(data?.response)
-  //     // let assistantContent = ''
-  //     // const assistantMessage: ChatMessage = {
-  //     //   id: (Date.now() + 1).toString(),
-  //     //   role: 'assistant',
-  //     //   content: '',
-  //     //   timestamp: new Date(),
-  //     //   sources: documents.slice(0, 2).map((doc) => doc.title),
-  //     // }
-
-  //     // setMessages((prev) => [...prev, assistantMessage])
-
-  //     // for await (const chunk of mockApiService.chatStream(content)) {
-  //     //   assistantContent += chunk
-  //     //   setMessages((prev) => {
-  //     //     const newMessages = [...prev]
-  //     //     const lastMessage = newMessages[newMessages.length - 1]
-  //     //     if (lastMessage && lastMessage.role === 'assistant') {
-  //     //       lastMessage.content = assistantContent
-  //     //     }
-  //     //     return newMessages
-  //     //   })
-  //     // }
-  //   } catch (error) {
-  //     console.error('Error processing message:', error)
-  //     const errorMessage: ChatMessage = {
-  //       id: (Date.now() + 1).toString(),
-  //       role: 'assistant',
-  //       content: 'Sorry, I encountered an error. Please try again.',
-  //       timestamp: new Date(),
-  //     }
-  //     setMessages((prev) => [...prev, errorMessage])
-  //   } finally {
-  //     setIsChatting(false)
-  //   }
-  // }
+  const handleRemoveDocument = async (id: string) => {}
 
   const handleSendMessage = async (content: string) => {
     if (content.trim().length === 0) return
